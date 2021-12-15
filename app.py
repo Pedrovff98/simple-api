@@ -127,8 +127,7 @@ def create():
 
         data = ProductCreateSchema().load(request.json)
 
-        cat = Category.objects.get(pk=data['category'])  # Valida o id
-        print(cat)  # receive the object
+        cat = Category.objects.get(pk=data['category'])  # Valida o id (receive the object)
 
         obj1 = Product(name=data['name'], price=data['price'], category=cat)
         obj1.save()
