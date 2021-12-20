@@ -3,17 +3,15 @@ from flask import Flask, jsonify, request
 from marshmallow.exceptions import ValidationError
 from mongoengine import connect
 from models import Product, Category
-from schemas import ProductSchema, ProductCreateSchema, ErrorSchema,\
-                    ErrorEntitySchema, CategorySchema, CategoryEditSchema
+from schemas import ProductSchema, ProductCreateSchema, ProductEditSchema, \
+                    ErrorSchema, ErrorEntitySchema, \
+                    CategorySchema, CategoryEditSchema
 
 app = Flask(__name__)
 swagger = Swagger(app)
 app.config['JSON_SORT_KEYS'] = False
 
-# products = [{'id': uuid.uuid4().hex, 'name': 'First Product', 'price': 81.54}]
-
 connect(
-
     db='ecommerce',
     username='db_username',
     password='db_password',
@@ -23,39 +21,77 @@ connect(
 )
 
 
-@app.route('/category', methods=['POST'])
-def categoryPost():
-
-    try:
-
-        data = CategorySchema().load(request.json)
-        obj1 = Category(**data)
-        obj1.save()
-        data = dict(CategorySchema().dump(obj1))
-
-        return jsonify({"data": data}), 200
-
-    except ValidationError as e:
-
-        errors = {'message': 'Unprocessable Entity', 'errors': e.messages}
-
-        return jsonify(errors), 422
-
-
 @app.route('/category', methods=['GET'])
+@swag_from({
+    'tags': ['category'],
+    'response': {
+        'schema': CategorySchema
+    }
+})
 def categoryGet():
+    """
+    Listing
+    """
     obj1 = Category.objects
+
     data = CategorySchema().dump(obj1, many=True)
 
     return jsonify({"data": data}), 200
 
 
+@app.route('/category', methods=['POST'])
+@swag_from({
+    'tags': ['category'],
+    'parameters': [{
+        'in': 'body',
+        'name': 'body',
+        'required': True,
+        'schema': CategorySchema
+    }],
+    'response': {
+        200: {
+            'schema': CategorySchema
+        },
+        422: {
+            'description': 'message: Register Not Found',
+            'schema': ErrorEntitySchema
+
+        }
+    }
+})
+def categoryPost():
+    """
+    create
+    """
+    try:
+
+        data = CategorySchema().load(request.json)
+
+        obj1 = Category(**data)
+
+        obj1.save()
+
+        data = dict(CategorySchema().dump(obj1))
+
+        return jsonify({"data": data}), 200
+
+    except ValidationError as e:
+        errors = {'message': 'Unprocessable Entity', 'errors': e.messages}
+
+        return jsonify(errors), 422
+
+
 @app.route('/category/<string:prod_id>', methods=['PATCH'])
 def categoryPatch(prod_id):
-
+    """""
+    Edit
+    """""
     try:
-        obj1 = category.objects.get(pk=prod_id)
+
+        obj1 = Category.objects.get(pk=prod_id)
+
         data = CategoryEditSchema().load(request.json)
+
         obj1.update(**data)
 
         return jsonify({"data": data}), 200
@@ -68,17 +104,29 @@ def categoryPatch(prod_id):
 
 @app.route('/category/<string:category_id>', methods=['DELETE'])
 def category(category_id):
+    """""
+    Delete
+    """""
     try:
 
-        obj1 = Category.objects.get(pk=category_id)
-        Category.delete(obj1)
-        return '', 204
+        Category.objects.get(pk=category_id)
+
+        if Product.objects(category=category_id):
+
+            return 'A Product registered in the category', 406
+
+        else:
+
+            Category.delete(Category.objects.get(pk=category_id))
+
+            return '', 204
 
     except Exception:
+
         return 'Register Not Found', 404
 
 
-########################################################################################################################
+# ************************************* PRODUCTS *************************************
 
 @app.route('/products', methods=['GET'])
 @swag_from({
@@ -93,7 +141,9 @@ def listing():
     """
     Listing
     """
+
     obj1 = Product.objects
+
     data = ProductSchema().dump(obj1, many=True)
 
     return jsonify({'data': data}), 200
@@ -127,9 +177,10 @@ def create():
 
         data = ProductCreateSchema().load(request.json)
 
-        cat = Category.objects.get(pk=data['category'])  # Valida o id (receive the object)
+        cat = Category.objects.get(pk=data['category'], status='active')  # Valida o id (receive the object)
 
         obj1 = Product(name=data['name'], price=data['price'], category=cat)
+
         obj1.save()
 
         data = ProductSchema().dump(obj1)
@@ -142,6 +193,7 @@ def create():
         return jsonify(errors), 422
 
     except Exception:
+
         return 'Register Not Found', 404
 
 
@@ -152,11 +204,11 @@ def create():
         'in': 'body',
         'name': 'body',
         'required': True,
-        'schema': ProductSchema
+        'schema': ProductEditSchema
     }],
     'responses': {
         200: {
-            'schema': ProductSchema
+            'schema': ProductEditSchema
         },
         404: {
             'description': 'message: Register Not Found',
@@ -170,12 +222,35 @@ def create():
 })
 def edit(prod_id):
     """
-    edit
+    Edit
     """
     try:
+
         obj1 = Product.objects.get(pk=prod_id)
-        data = ProductSchema().load(request.json)
-        obj1.update(**data)
+
+        data = ProductEditSchema().load(request.json)
+
+        if data.__contains__('category') and data.__contains__('name'):
+
+            cat = Category.objects.get(pk=data['category'], status="active")
+
+            obj1.update(name=data['name'], category=cat)
+
+        elif data.__contains__('category') and data.__contains__('price'):
+
+            cat = Category.objects.get(pk=data['category'])
+
+            obj1.update(price=data['price'], category=cat)
+
+        elif data.__contains__('category') and data.__contains__('price') and data.__contains__('name'):
+
+            cat = Category.objects.get(pk=data['category'])
+
+            obj1.update(name=data['name'], price=data['price'], category=cat)
+
+        else:
+
+            obj1.update(**data)
 
         return jsonify({'data': data}), 200
 
@@ -209,8 +284,13 @@ def edit(prod_id):
     }
 })
 def delete(prod_id):
+    """""
+    Delete
+    """""
     try:
+
         obj1 = Product.objects.get(pk=prod_id)
+
         Product.delete(obj1)
 
         return '', 204

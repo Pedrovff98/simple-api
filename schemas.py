@@ -4,7 +4,7 @@ from marshmallow import Schema, fields, validate
 class CategorySchema(Schema):
     id = fields.String(dump_only=True)
     name = fields.String(required=True, allow_none=False, validate=validate.Length(min=2, max=80))
-    status = fields.Str(required=True, allow_none=False, validate=validate.OneOf(["Active", "Inactive"]))
+    status = fields.Str(required=True, allow_none=False, validate=validate.OneOf(["active", "inactive"]))
 
     class Meta:
         fields = ('id', 'name', 'status')
@@ -13,14 +13,16 @@ class CategorySchema(Schema):
 
 class CategoryEditSchema(Schema):
     name = fields.String(required=False, allow_none=False, validate=validate.Length(min=2, max=80))
-    status = fields.Str(required=False, allow_none=False, validate=validate.OneOf(["Active", "Inactive"]))
+    status = fields.Str(required=False, allow_none=False, validate=validate.OneOf(["active", "inactive"]))
 
     class Meta:
         fields = ('name', 'status')
         ordered = True
 
 
-# PRODUCT
+# ************************************* PRODUCTS *************************************
+
+
 
 class ProductSchema(Schema):
     id = fields.String(dump_only=True)
@@ -44,11 +46,12 @@ class ProductCreateSchema(Schema):
 
 
 class ProductEditSchema(Schema):
-    name = fields.String(required=True, allow_none=False, validate=validate.Length(min=2, max=80))
-    price = fields.Float(required=True, allow_none=False, validate=validate.Range(min=0))
+    category = fields.String(required=False, allow_none=False)
+    name = fields.String(required=False, allow_none=False, validate=validate.Length(min=2, max=80))
+    price = fields.Float(required=False, allow_none=False, validate=validate.Range(min=0))
 
     class Meta:
-        fields = ("name", "price")
+        fields = ("name", "price", "category")
         ordered = True
 
 
@@ -67,3 +70,4 @@ class ErrorEntitySchema(Schema):  # 422
     class Meta:
         fields = ('message', 'errors')
         ordered = True
+

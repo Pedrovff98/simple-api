@@ -10,3 +10,6 @@ class Product(Document):
 class Category(Document):
     name = StringField(requerid=True, allow_nome=False)
     status = StringField(required=True, allow_nome=False)
+
+
+
