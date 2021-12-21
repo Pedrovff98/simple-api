@@ -194,7 +194,7 @@ def create():
 
     except Exception:
 
-        return 'Register Not Found', 404
+        return 'Register Category Not Found', 404
 
 
 @app.route('/products/<string:prod_id>', methods=['PATCH'])
@@ -230,21 +230,21 @@ def edit(prod_id):
 
         data = ProductEditSchema().load(request.json)
 
-        if data.__contains__('category') and data.__contains__('name'):
+        cat = Category.objects.get(pk=data['category'], status='active')
 
-            cat = Category.objects.get(pk=data['category'])
+        if data.__contains__('category'):
+
+            obj1.update(category=cat)
+
+        elif data.__contains__('category') and data.__contains__('name'):
 
             obj1.update(name=data['name'], category=cat)
 
         elif data.__contains__('category') and data.__contains__('price'):
 
-            cat = Category.objects.get(pk=data['category'])
-
             obj1.update(price=data['price'], category=cat)
 
         elif data.__contains__('category') and data.__contains__('price') and data.__contains__('name'):
-
-            cat = Category.objects.get(pk=data['category'])
 
             obj1.update(name=data['name'], price=data['price'], category=cat)
 
@@ -261,7 +261,7 @@ def edit(prod_id):
 
     except Exception:
 
-        return 'Register Not Found', 404
+        return 'Register Category Not Found', 404
 
 
 @app.route('/products/<string:prod_id>', methods=['DELETE'])
