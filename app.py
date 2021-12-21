@@ -232,11 +232,7 @@ def edit(prod_id):
 
         cat = Category.objects.get(pk=data['category'], status='active')
 
-        if data.__contains__('category'):
-
-            obj1.update(category=cat)
-
-        elif data.__contains__('category') and data.__contains__('name'):
+        if data.__contains__('category') and data.__contains__('name'):
 
             obj1.update(name=data['name'], category=cat)
 
@@ -247,6 +243,10 @@ def edit(prod_id):
         elif data.__contains__('category') and data.__contains__('price') and data.__contains__('name'):
 
             obj1.update(name=data['name'], price=data['price'], category=cat)
+
+        elif data.__contains__('category'):
+
+            obj1.update(category=cat)
 
         else:
 
