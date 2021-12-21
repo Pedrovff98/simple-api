@@ -23,7 +23,6 @@ class CategoryEditSchema(Schema):
 # ************************************* PRODUCTS *************************************
 
 
-
 class ProductSchema(Schema):
     id = fields.String(dump_only=True)
     category = fields.Nested(CategorySchema)
