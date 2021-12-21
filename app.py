@@ -232,7 +232,7 @@ def edit(prod_id):
 
         if data.__contains__('category') and data.__contains__('name'):
 
-            cat = Category.objects.get(pk=data['category'], status="active")
+            cat = Category.objects.get(pk=data['category'])
 
             obj1.update(name=data['name'], category=cat)
 
